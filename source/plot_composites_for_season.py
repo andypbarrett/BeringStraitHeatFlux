@@ -10,7 +10,7 @@ import numpy as np
 import os
 import random
 
-#import matplotlib as mpl
+import matplotlib as mpl
 #mpl.use('agg')
 #mpl.use('pdf')
     
@@ -131,7 +131,7 @@ def plot_composites(variable='SLP', lag=0, bss=False):
     loVarAnom = season_composite(index, varAnom, highest=False, lag=lag)
 
     # Get confidence limits using Monte Carlo sampling of data
-    season_confidence = get_confidence_limits(varAnom, nsamples=1000)
+    season_confidence = get_confidence_limits(varAnom, nsamples=1000, q=[0.025,0.975])
 
     # Set values within upper (0.95) and lower (0.05) bounds to missing
     hiVarAnom = hiVarAnom.where( (hiVarAnom > season_confidence.sel(quantile='upper')) |
@@ -193,7 +193,7 @@ def plot_composites(variable='SLP', lag=0, bss=False):
 #    fig.set_size_inches(width, height)
 #    fig.savefig('plot.pdf')
     
-    fig.savefig('june_to_sept_composites_lag{:d}_with_cf.png'.format(lag), dpi=600)
+    fig.savefig('june_to_sept_composites_lag{:d}_with_cf_95percent.png'.format(lag), dpi=600)
     
     #plt.show()
     
