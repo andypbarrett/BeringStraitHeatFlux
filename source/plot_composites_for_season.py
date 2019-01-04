@@ -28,7 +28,20 @@ monid = {'DJF': [12,1,2],
          'JJA': [6,7,8],
          'SON': [9,10,11],}
 
-def plot_panel(da, nrow, ncol, index, winds=None, bss=False, norm=None, cmap=None, levels=None):
+def make_title(windspd, windsig, fmtstr):
+    """
+    Generates title for composite plots showing
+    significant composite windspeeds in bold
+    """
+    strarr = []
+    for spd, sig, fmt in zip(windspd,windsig,fmtstr):
+        if sig:
+            strarr.append(r"$\bf{"+fmt.format(spd)+"}$")
+        else:
+            strarr.append(fmt.format(spd))
+    return ', '.join(strarr)
+
+def plot_panel(da, nrow, ncol, index, windspd=None, windsig=None, bss=False, norm=None, cmap=None, levels=None):
 
     ax = plt.subplot(nrow, ncol, index, projection=ccrs.NorthPolarStereo())
     ax.set_extent([-180.,180.,45.,90.], ccrs.PlateCarree())
@@ -37,11 +50,15 @@ def plot_panel(da, nrow, ncol, index, winds=None, bss=False, norm=None, cmap=Non
 
     ax.coastlines()
     ax.gridlines()
+    
+    if bss:
+        fmtstr = ['V(BS)={:4.1f}', 'U(ESS)={:4.1f}', 'U(BSS)={:4.1f}']
+    else:
+        fmtstr = ['V(BS)={:4.1f}', 'U(ESS)={:4.1f}', 'U(GOA)={:4.1f}']
+        
     if winds:
-        if bss:
-            ax.set_title('V(BS)={:4.1f}, U(ESS)={:4.1f}, U(BSS)={:4.1f}'.format(*winds), fontsize=8)
-        else:
-            ax.set_title('V(BS)={:4.1f}, U(ESS)={:4.1f}, U(GOA)={:4.1f}'.format(*winds), fontsize=8)
+        ax.set_title( make_title(windspd, windsig, fmtstr), fontsize=8 ) 
+        #'V(BS)={:4.1f}, U(ESS)={:4.1f}, U(BSS)={:4.1f}'.format(*winds)
     else:
         ax.set_title('')
     
@@ -105,15 +122,23 @@ def plot_composites(variable='SLP', lag=0, bss=False):
                                      
     if bss:
         # Dictionary of regional wind speeds: V(BS), U(ESS), U(BSS)
-        windd = {'DJF': {'hi': [-1.5, -0.4, -2.2], 'lo': [-5.5,  1.4, -1.3]},
-                 'MAM': {'hi': [-0.8, -1.4, -1.4], 'lo': [-5.2, -0.2, -1.3]},
-                 'JJA': {'hi': [-0.2, -1.4,  0.0], 'lo': [-0.7,  1.6,  0.8]},
-                 'SON': {'hi': [-1.6, -1.8,  0.0], 'lo': [-4.1,  1.3,  0.0]}}
+        windd = {'DJF': {'hi': [-1.5, -0.4, -0.3], 'lo': [-5.5,  1.4, -4.1],
+                         'hisig': [True,True,True], 'losig': [True,True,True]},
+                 'MAM': {'hi': [-0.8, -1.4,  0.1], 'lo': [-5.2, -0.2, -3.3],
+                         'hisig': [True,True,True], 'losig': [True,False,True]},
+                 'JJA': {'hi': [-0.2, -1.4,  0.6], 'lo': [-0.7,  1.6, -0.2],
+                         'hisig': [False,True,False], 'losig': [False,True,True]},
+                 'SON': {'hi': [-1.6, -1.8, -0.3], 'lo': [-4.1,  1.3, -2.5],
+                         'hisig': [True,True,True], 'losig': [True,True,True]}}
     else:
-        windd = {'DJF': {'hi': [-1.5, -0.4,  1.2], 'lo': [-5.5,  1.4,  2.3]},
-                 'MAM': {'hi': [-0.8, -1.4,  0.6], 'lo': [-5.2, -0.2,  2.3]},
-                 'JJA': {'hi': [-0.2, -1.4,  1.7], 'lo': [-0.7,  1.6,  1.8]},
-                 'SON': {'hi': [-1.6, -1.8,  2.8], 'lo': [-4.1,  1.3,  3.5]}}
+        windd = {'DJF': {'hi': [-1.5, -0.4,  1.2], 'lo': [-5.5,  1.4,  2.3],
+                         'hisig': [True,True,False], 'losig': [True,True,True]},
+                 'MAM': {'hi': [-0.8, -1.4,  0.6], 'lo': [-5.2, -0.2,  2.3],
+                         'hisig': [True,True,False], 'losig': [True,False,True]},
+                 'JJA': {'hi': [-0.2, -1.4,  1.7], 'lo': [-0.7,  1.6,  1.8],
+                         'hisig': [False,True,False], 'losig': [False,True,False]},
+                 'SON': {'hi': [-1.6, -1.8,  2.8], 'lo': [-4.1,  1.3,  3.5],
+                         'hisig': [True,True,False], 'losig': [True,True,False]}}
 
     print (windd['DJF']['hi'])
     
