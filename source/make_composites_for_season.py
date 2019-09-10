@@ -82,11 +82,12 @@ def season_composite(index, field, highest=True, N=15, lag=0):
     result['season'] = season
     return result
 
-def make_composites(variable='SLP', lag=0, bss=False, outfile='bering_strait_slp_composites.nc4', verbose=False):
+def make_composites(variable='SLP', index='TRANSPORT', lag=0, nsamples=1000,
+                    outfile='bering_strait_slp_composites.nc4', verbose=False):
                                      
     # Index to composite on
     if verbose: print ('Getting mooring data')
-    index = util.read_mooring(type='TRANSPORT', column='MeanCorr') # 
+    index = util.read_mooring(var=index, column='MeanCorr') # 
 
     # Variable to composite
     if verbose: print ('Getting reanalysis data') 
@@ -100,7 +101,7 @@ def make_composites(variable='SLP', lag=0, bss=False, outfile='bering_strait_slp
 
     # Get confidence limits using Monte Carlo sampling of data
     if verbose: print ('Estimating confidence limits')
-    season_confidence = get_confidence_limits(varAnom, nsamples=1000, q=[0.025,0.975])
+    season_confidence = get_confidence_limits(varAnom, nsamples=nsamples, q=[0.025,0.975])
 
     # Set values within upper (0.95) and lower (0.05) bounds to missing
     hiVarAnom = hiVarAnom.where( (hiVarAnom > season_confidence.sel(quantile='upper')) |
@@ -112,9 +113,10 @@ def make_composites(variable='SLP', lag=0, bss=False, outfile='bering_strait_slp
     diffVarAnom = hiVarAnom - loVarAnom
         
     # Save data to file
-    dsOut = xr.DataSet({'hiVarAnomaly': hiVarAnom,
-                        'loVarAnomaly': loVarAnom,
-                        'diffVarAnomaly': diffVarAnom})
+    if verbose: print ('Writing results to '+outfile)
+    dsOut = xr.Dataset({'hiVarAnom': hiVarAnom,
+                        'loVarAnom': loVarAnom,
+                        'diffVarAnom': diffVarAnom})
     dsOut.to_netcdf(outfile)
     
     return
@@ -130,15 +132,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = 'Generates composites of variable for a season')
     parser.add_argument('--variable', type=str, default='SLP',
                           help='Name of variable to composite')
+    parser.add_argument('--index', type=str, default='TRANSPORT',
+                       help='Name of mooring variable to use for composite')
     parser.add_argument('--lag', '-l', type=int, default=0,
                           help='Lag in months')
-    parser.add_argument('--outfile', type=str, default='slp_composite_for_season',
+    parser.add_argument('--nsamples', '-n', type=int, default=1000,
+                          help='Number of sample used for confidence limits estimate - default=1000')
+    parser.add_argument('--outfile', type=str, default='slp_composite_for_season.nc4',
                           help='Name of outfile')
-    parser.add_argument('--bss', action='store_true',
-                        help='Use Bering Sea Shelf winds rather than Gulf of Alaska')
     parser.add_argument('--verbose', '-v', action='store_true')
     
     args = parser.parse_args()
     
-    plot_composites(variable=args.variable, lag=args.lag, bss=args.bss, verbose=args.verbose)
+    make_composites(variable=args.variable, index=args.index, lag=args.lag,
+                    nsamples=args.nsamples, outfile=args.outfile, verbose=args.verbose)
     
