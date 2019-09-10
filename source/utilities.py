@@ -2,9 +2,9 @@ import os
 import pandas as pd
 import xarray as xr
 
-from constants import MOORING_DIRPATH, MOORING_FILEFMT, REANALYSIS_DIRPATH
+from constants import MOORING_DIRPATH, MOORING_FILEPATH, REANALYSIS_DIRPATH
 
-def read_mooring(type='HEAT', column=None):
+def read_mooring(var='HEAT', column=None):
     """
     Reads Heat flux, transport or temperature data derived from Bering Strait
     A3 mooring data.
@@ -21,11 +21,16 @@ def read_mooring(type='HEAT', column=None):
              'Mean', 'Error',
              'MeanCorr', 'CorrErr']
     
-    filepath = os.path.join( MOORING_DIRPATH, MOORING_FILEFMT.format(type) )
-    df = pd.read_csv(filepath, header=None, comment='%',sep='\s+', 
-                     names=names,
-                     parse_dates={'date': ['Year', 'Month']},
-                     index_col='date')
+    filepath = os.path.join( MOORING_DIRPATH,
+                             'Month',
+                             MOORING_FILEPATH[var] )
+    if var == 'WIND':
+        df = pd.read_csv(filepath, header=0, index_col=0, parse_dates=True)
+    else:
+        df = pd.read_csv(filepath, header=None, comment='%',sep='\s+', 
+                         names=names,
+                         parse_dates={'date': ['Year', 'Month']},
+                         index_col='date')
 
     if column:
         return df[column]
