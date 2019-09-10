@@ -32,6 +32,8 @@ def make_title(windspd, windsig, fmtstr):
     """
     Generates title for composite plots showing
     significant composite windspeeds in bold
+
+    N.B. modified to only show V(BS) and U(ESS)
     """
     strarr = []
     for spd, sig, fmt in zip(windspd,windsig,fmtstr):
@@ -39,9 +41,11 @@ def make_title(windspd, windsig, fmtstr):
             strarr.append(r"$\bf{"+fmt.format(spd)+"}$")
         else:
             strarr.append(fmt.format(spd))
-    return ', '.join(strarr)
+    return ', '.join(strarr[:-1])
 
-def plot_panel(da, nrow, ncol, index, windspd=None, windsig=None, bss=False, norm=None, cmap=None, levels=None):
+def plot_panel(da, nrow, ncol, index, windspd=None, windsig=None,
+               bss=False, norm=None, cmap=None, levels=None,
+               notitle=True):
 
     ax = plt.subplot(nrow, ncol, index, projection=ccrs.NorthPolarStereo())
     ax.set_extent([-180.,180.,45.,90.], ccrs.PlateCarree())
@@ -55,12 +59,15 @@ def plot_panel(da, nrow, ncol, index, windspd=None, windsig=None, bss=False, nor
         fmtstr = ['V(BS)={:4.1f}', 'U(ESS)={:4.1f}', 'U(BSS)={:4.1f}']
     else:
         fmtstr = ['V(BS)={:4.1f}', 'U(ESS)={:4.1f}', 'U(GOA)={:4.1f}']
-        
-    if winds:
-        ax.set_title( make_title(windspd, windsig, fmtstr), fontsize=8 ) 
-        #'V(BS)={:4.1f}, U(ESS)={:4.1f}, U(BSS)={:4.1f}'.format(*winds)
-    else:
+
+    if notitle:
         ax.set_title('')
+    else:
+        if windspd and windsig:
+            ax.set_title( make_title(windspd, windsig, fmtstr), fontsize=7 ) 
+        #'V(BS)={:4.1f}, U(ESS)={:4.1f}, U(BSS)={:4.1f}'.format(*winds)
+        else:
+            ax.set_title('')
     
     return ax
 
@@ -111,11 +118,11 @@ def plot_composites(variable='SLP', lag=0, bss=False,
         ax.append( plot_panel( ds.hiVarAnom.sel(season=ssn), nrow, ncol, 1+(i*ncol),
                                levels=levels, cmap=cmap,
                                windspd=windd[ssn]['hi'], windsig=windd[ssn]['hisig'],
-                               bss=bss ) )
+                               bss=bss, notitle=True) )
         ax.append( plot_panel( ds.loVarAnom.sel(season=ssn), nrow, ncol, 2+(i*ncol),
                                levels=levels, cmap=cmap,
                                windspd=windd[ssn]['lo'], windsig=windd[ssn]['losig'],
-                               bss=bss ) )
+                               bss=bss, notitle=True) )
         ax.append( plot_panel( ds.diffVarAnom.sel(season=ssn), nrow, ncol, 3+(i*ncol),
                                levels=levels, cmap=cmap ) )
     
@@ -129,17 +136,21 @@ def plot_composites(variable='SLP', lag=0, bss=False,
                                    orientation='horizontal', extend='both')
     cb.set_label('hPa')
 
-    plt.figtext(0.325, 0.91, 'High', fontsize=20, rotation='horizontal', ha='center')
-    plt.figtext(0.575, 0.91, 'Low', fontsize=20, rotation='horizontal', ha='center')
-    plt.figtext(0.825, 0.91, 'Difference', fontsize=20, rotation='horizontal', ha='center')
+    tx0 = np.mean([ax[0].get_position().x0, ax[0].get_position().x1])
+    tx1 = np.mean([ax[1].get_position().x0, ax[1].get_position().x1])
+    tx2 = np.mean([ax[2].get_position().x0, ax[2].get_position().x1])
+    
+    plt.figtext(tx0, 0.89, 'High', fontsize=20, rotation='horizontal', ha='center')
+    plt.figtext(tx1, 0.89, 'Low', fontsize=20, rotation='horizontal', ha='center')
+    plt.figtext(tx2, 0.89, 'Difference', fontsize=20, rotation='horizontal', ha='center')
 
     dy = (0.8/4.)
     y0 = 0.9
 
-    plt.figtext(0.15, y0-(0.5*dy), season[0], fontsize=20, rotation='vertical', va='center')
-    plt.figtext(0.15, y0-(1.5*dy), season[1], fontsize=20, rotation='vertical', va='center')
-    plt.figtext(0.15, y0-(2.5*dy), season[2], fontsize=20, rotation='vertical', va='center')
-    plt.figtext(0.15, y0-(3.5*dy), season[3], fontsize=20, rotation='vertical', va='center')
+    plt.figtext(0.17, y0-(0.5*dy), season[0], fontsize=20, rotation='vertical', va='center')
+    plt.figtext(0.17, y0-(1.5*dy), season[1], fontsize=20, rotation='vertical', va='center')
+    plt.figtext(0.17, y0-(2.5*dy), season[2], fontsize=20, rotation='vertical', va='center')
+    plt.figtext(0.17, y0-(3.5*dy), season[3], fontsize=20, rotation='vertical', va='center')
 
 #    fig.set_size_inches(width, height)
 #    fig.savefig('plot.pdf')
@@ -163,7 +174,9 @@ if __name__ == "__main__":
                           help='Name of variable to composite')
     parser.add_argument('--lag', '-l', type=int, default=0,
                           help='Lag in months')
-    parser.add_argument('--outfile', type=str, default='slp_composite',
+    parser.add_argument('--outfile', type=str, default='bering_strait_slp_composite',
+                          help='Name of outfile')
+    parser.add_argument('--infile', type=str, default='bering_strait_slp_composites.nc4',
                           help='Name of outfile')
     parser.add_argument('--bss', action='store_true',
                         help='Use Bering Sea Shelf winds rather than Gulf of Alaska')
@@ -171,5 +184,6 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    plot_composites(variable=args.variable, lag=args.lag, bss=args.bss, verbose=args.verbose)
+    plot_composites(variable=args.variable, lag=args.lag, bss=args.bss,
+                    infile=args.infile, outfile=args.outfile, verbose=args.verbose)
     
