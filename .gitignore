@@ -1,0 +1,6 @@
+/notebooks/.ipynb_checkpoints/
+*.png
+*.eps
+*.pyc
+*.*~
+
