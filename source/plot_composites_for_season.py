@@ -71,8 +71,9 @@ def plot_panel(da, nrow, ncol, index, windspd=None, windsig=None,
     
     return ax
 
-def plot_composites(variable='SLP', lag=0, bss=False,
+def plot_composites(variable='SLP', add_winds=True, lag=0, bss=False,
                     infile='slp_composites_for_season.nc4',
+                    wind_file=none,
                     outfile='slp_composites_for_season', verbose=False):
                                      
     if bss:
