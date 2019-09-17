@@ -48,7 +48,12 @@ def get_composite_dates(s, N=5, highest=True):
     return s.dropna().sort_values(ascending=ascending)[:N].index
 
 def MonClim(ds):
+    """
+    Calculates monthly climatolgy from monthly data
 
+    :param ds: xarray DataSet
+    :return: xarray DataSet of monthly climatology
+    """
     return ds.dropna(dim='time').groupby('time.month').mean(dim='time')
 
 def get_reanalysis(variable='SLP'):
