@@ -1,4 +1,5 @@
 import socket
+import cartopy.crs as ccrs
 
 mooring_dirpath = {
     'nsidc-abarrett-442': '/home/apbarret/Data/BeringStraitHeatFlux/Mooring',
@@ -19,6 +20,14 @@ MOORING_FILEPATH = {
     'TRANSPORT': 'BeringStrait_Monthlymeans_TRANSPORT_Oct2017.txt',
     'WIND': 'BeringStrait_MonthlyMeans_WIND_May2019.txt',
     }
+
+REANALYSIS_FILEPATH = {
+    'SLP': '####PLACE_HOLDER####',
+    'U10M': '####ANOTHER_PLACE_HOLDER####'
+}
+
+MAP_PROJ = ccrs.NorthPolarStereo()  # Map projection for plots
+MAP_EXTENT = [-4651194.319071749, 2835721.446215284, -2835721.446215284, 4651194.319071749]  # Map extent in NorthPolarStereo
 
 
 
