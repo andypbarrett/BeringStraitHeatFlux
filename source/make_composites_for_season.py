@@ -103,11 +103,16 @@ def make_composites(variable='SLP', index='TRANSPORT', lag=0, nsamples=1000,
     if verbose: print ('Estimating confidence limits')
     season_confidence = get_confidence_limits(varAnom, nsamples=nsamples, q=[0.025,0.975])
 
+    # Identify gridcells that are significant
+    hiVarSig = ( (hiVarAnom > season_confidence.sel(quantile='upper')) |
+                 (hiVarAnom < season_confidence.sel(quantile='lower')) )
+    loVarSig = ( (loVarAnom > season_confidence.sel(quantile='upper')) |
+                 (loVarAnom < season_confidence.sel(quantile='lower')) )
     # Set values within upper (0.95) and lower (0.05) bounds to missing
-    hiVarAnom = hiVarAnom.where( (hiVarAnom > season_confidence.sel(quantile='upper')) |
-                                 (hiVarAnom < season_confidence.sel(quantile='lower')) )
-    loVarAnom = loVarAnom.where( (loVarAnom > season_confidence.sel(quantile='upper')) |
-                                 (loVarAnom < season_confidence.sel(quantile='lower')) )
+    #hiVarAnom = hiVarAnom.where( (hiVarAnom > season_confidence.sel(quantile='upper')) |
+    #                             (hiVarAnom < season_confidence.sel(quantile='lower')) )
+    #loVarAnom = loVarAnom.where( (loVarAnom > season_confidence.sel(quantile='upper')) |
+    #                             (loVarAnom < season_confidence.sel(quantile='lower')) )
 
     # Get difference
     diffVarAnom = hiVarAnom - loVarAnom
@@ -116,7 +121,10 @@ def make_composites(variable='SLP', index='TRANSPORT', lag=0, nsamples=1000,
     if verbose: print ('Writing results to '+outfile)
     dsOut = xr.Dataset({'hiVarAnom': hiVarAnom,
                         'loVarAnom': loVarAnom,
-                        'diffVarAnom': diffVarAnom})
+                        'diffVarAnom': diffVarAnom,
+                        'hiVarSig': hiVarSig,
+                        'loVarSig': loVarSig,
+                        })
     dsOut.to_netcdf(outfile)
     
     return
